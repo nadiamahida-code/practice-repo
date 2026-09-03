@@ -45,6 +45,58 @@ button {
   font-family: inherit;
 }
 
+/* ---- app shell / sidebar ---- */
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+}
+.sidebar {
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--line);
+  padding: 20px 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 20px 22px;
+}
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 20px;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  border-left: 2px solid transparent;
+}
+.sidebar-link:hover {
+  color: var(--text);
+  background: var(--surface2);
+}
+.sidebar-link.active {
+  color: var(--text);
+  background: var(--accent-soft);
+  border-left-color: var(--accent);
+}
+.app-main {
+  flex: 1;
+  min-width: 0;
+}
+
 /* ---- topbar ---- */
 .topbar {
   display: flex;
@@ -184,6 +236,76 @@ main {
 .tag.band {
   background: var(--surface3);
   color: var(--text-muted);
+}
+.tag.phase-sales {
+  background: rgba(232, 182, 90, 0.14);
+  color: var(--warn);
+}
+.tag.phase-delivery {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.tag.phase-complete {
+  background: rgba(127, 217, 154, 0.14);
+  color: var(--good);
+}
+
+/* projects list */
+.project-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 0;
+  border-top: 1px solid var(--line);
+  cursor: pointer;
+}
+.project-list-item:first-child {
+  border-top: none;
+}
+.project-list-item:hover .pname {
+  color: var(--accent);
+}
+.project-list-item .pname {
+  font-weight: 600;
+  font-size: 14px;
+}
+.project-list-item .pclient {
+  font-size: 12.5px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+.project-list-item .pright {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+.project-list-item .sow-status {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-family: var(--font-plex-mono), monospace;
+}
+
+/* project detail */
+.project-detail-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 13px;
+  text-decoration: none;
+  margin-bottom: 16px;
+}
+.back-link:hover {
+  color: var(--text);
 }
 
 /* buttons */
