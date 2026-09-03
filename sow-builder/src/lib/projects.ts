@@ -8,6 +8,10 @@ import { useSyncExternalStore } from "react";
 
 export type ProjectPhase = "Sales" | "Delivery" | "Complete";
 
+export const SALES_MILESTONES = ["Client introduction call", "Client discovery", "Prepared to sign SOW", "SOW signed"] as const;
+
+export const DELIVERY_MILESTONES = ["Project kickoff", "Discovery", "Configuration", "Trainings", "User acceptance training", "Completion"] as const;
+
 export interface TeamMember {
   id: string;
   name: string;
@@ -16,12 +20,14 @@ export interface TeamMember {
 
 export interface Project {
   id: string;
+  clientId: string;
   name: string;
-  client: string;
   phase: ProjectPhase;
   /** Set once a SOW has been started for this project (Sales phase's "Create SOW" flow). */
   sowId: string | null;
   team: TeamMember[];
+  /** Index into the current phase's milestone list of the furthest-reached milestone. -1 = none yet. */
+  milestoneIndex: number;
 }
 
 const STORAGE_KEY = "sow-builder:projects";
@@ -29,47 +35,51 @@ const STORAGE_KEY = "sow-builder:projects";
 const SEED_PROJECTS: Project[] = [
   {
     id: "proj-acme-wfm",
+    clientId: "client-acme",
     name: "Acme Corp — WFM Rollout",
-    client: "Acme Corp",
     phase: "Sales",
     sowId: null,
     team: [{ id: "m-priya", name: "Priya Nandakumar", role: "Sales Rep" }],
+    milestoneIndex: 0,
   },
   {
     id: "proj-brightpath-copilot",
+    clientId: "client-brightpath",
     name: "Bright Path Logistics — Copilot Pilot",
-    client: "Bright Path Logistics",
     phase: "Sales",
     sowId: "sow-seed-brightpath",
     team: [
       { id: "m-marcus", name: "Marcus T.", role: "Solutions Consultant" },
       { id: "m-jordan", name: "Jordan B.", role: "Project Manager" },
     ],
+    milestoneIndex: 2,
   },
   {
     id: "proj-solace-migration",
+    clientId: "client-solace",
     name: "Solace Health — Full Migration",
-    client: "Solace Health",
     phase: "Delivery",
     sowId: "sow-seed-solace",
     team: [
       { id: "m-sasha", name: "Sasha L.", role: "Delivery Consultant" },
       { id: "m-jordan2", name: "Jordan B.", role: "Project Manager" },
     ],
+    milestoneIndex: 2,
   },
   {
     id: "proj-northwind-support",
+    clientId: "client-northwind",
     name: "Northwind Traders — Support Setup",
-    client: "Northwind Traders",
     phase: "Complete",
     sowId: "sow-seed-northwind",
     team: [{ id: "m-priya2", name: "Priya Nandakumar", role: "Account Owner" }],
+    milestoneIndex: DELIVERY_MILESTONES.length - 1,
   },
 ];
 
 /** Backfills fields added after a record may have already been persisted. */
 function normalize(projects: Project[]): Project[] {
-  return projects.map((p) => ({ ...p, team: p.team ?? [] }));
+  return projects.map((p) => ({ ...p, team: p.team ?? [], milestoneIndex: p.milestoneIndex ?? -1 }));
 }
 
 const listeners = new Set<() => void>();
@@ -141,4 +151,36 @@ export function removeTeamMember(projectId: string, memberId: string): void {
 
 export function newSowId(): string {
   return `sow-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+/**
+ * Sets the furthest-reached milestone for the project's current phase.
+ * Reaching the last milestone of Sales or Delivery auto-advances the phase
+ * (Sales -> Delivery on "SOW signed", Delivery -> Complete on "Completion"),
+ * resetting milestone progress for the new phase.
+ */
+export function setMilestone(projectId: string, index: number): void {
+  const project = getSnapshot().find((p) => p.id === projectId);
+  if (!project) return;
+
+  const milestones = project.phase === "Sales" ? SALES_MILESTONES : project.phase === "Delivery" ? DELIVERY_MILESTONES : [];
+  const isLastMilestone = index === milestones.length - 1;
+
+  if (isLastMilestone && project.phase === "Sales") {
+    updateProject(projectId, { phase: "Delivery", milestoneIndex: -1 });
+  } else if (isLastMilestone && project.phase === "Delivery") {
+    updateProject(projectId, { phase: "Complete", milestoneIndex: -1 });
+  } else {
+    updateProject(projectId, { milestoneIndex: index });
+  }
+}
+
+export function createProject(input: { name: string; clientId: string }): string {
+  const id = `proj-${Math.random().toString(36).slice(2, 10)}`;
+  const newProject: Project = { id, clientId: input.clientId, name: input.name, phase: "Sales", sowId: null, team: [], milestoneIndex: -1 };
+  const next = [...getSnapshot(), newProject];
+  cache = next;
+  writeToStorage(next);
+  emitChange();
+  return id;
 }

@@ -196,42 +196,7 @@ main {
   margin: 0 auto;
   padding: 36px 24px 80px;
 }
-main.main-wide {
-  max-width: 1100px;
-}
 
-/* two-column project detail layout */
-.detail-layout {
-  display: flex;
-  gap: 20px;
-  align-items: flex-start;
-}
-.detail-main {
-  flex: 1;
-  min-width: 0;
-}
-.detail-side {
-  width: 300px;
-  flex-shrink: 0;
-}
-.side-box {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 20px;
-}
-.side-box + .side-box {
-  margin-top: 16px;
-}
-.next-step-item {
-  font-size: 13px;
-  line-height: 1.5;
-  padding: 10px 0;
-  border-top: 1px solid var(--line);
-}
-.next-step-item:first-child {
-  border-top: none;
-}
 .future-rec-item {
   display: block;
   padding: 9px 0;
@@ -243,13 +208,42 @@ main.main-wide {
   border-top: none;
 }
 
-@media (max-width: 800px) {
-  .detail-layout {
-    flex-direction: column;
-  }
-  .detail-side {
-    width: 100%;
-  }
+/* milestone timeline */
+.milestone-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  background: none;
+  border: none;
+  border-top: 1px solid var(--line);
+  text-align: left;
+  padding: 11px 0;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text-muted);
+}
+.milestone-item:first-child {
+  border-top: none;
+}
+.milestone-item:hover {
+  color: var(--text);
+}
+.milestone-item.done {
+  color: var(--text);
+  font-weight: 600;
+}
+.milestone-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  flex-shrink: 0;
+}
+.milestone-item.done .milestone-dot {
+  background: var(--accent);
+  border-color: var(--accent);
 }
 .card {
   background: var(--surface);
