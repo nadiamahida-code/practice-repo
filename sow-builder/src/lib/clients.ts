@@ -19,6 +19,7 @@ const SEED_CLIENTS: Client[] = [
   { id: "client-northwind", name: "Northwind Traders" },
 ];
 
+const listeners = new Set<() => void>();
 let cache: Client[] | null = null;
 
 function readFromStorage(): Client[] {
@@ -51,13 +52,25 @@ function getServerSnapshot(): Client[] {
   return EMPTY_CLIENTS;
 }
 
-// Clients are seed-only for now (no create/edit UI yet), so there's nothing
-// to subscribe to beyond the initial client-side hydration.
-function subscribe(): () => void {
-  return () => {};
+function subscribe(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
 }
 
-/** Client list, populated once the store hydrates client-side. */
+function emitChange(): void {
+  listeners.forEach((listener) => listener());
+}
+
+/** Live-subscribed client list. Empty array until the client store hydrates. */
 export function useClients(): Client[] {
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+}
+
+export function createClient(name: string): string {
+  const id = `client-${Math.random().toString(36).slice(2, 10)}`;
+  const next = [...getSnapshot(), { id, name }];
+  cache = next;
+  writeToStorage(next);
+  emitChange();
+  return id;
 }

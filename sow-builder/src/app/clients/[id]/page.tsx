@@ -1,9 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useClients } from "@/lib/clients";
-import { useProjects, type Project } from "@/lib/projects";
+import { useProjects, createProject, type Project } from "@/lib/projects";
 
 const PHASE_TAG_CLASS: Record<Project["phase"], string> = {
   Sales: "tag phase-sales",
@@ -18,6 +19,14 @@ export default function ClientDetailPage() {
   const projects = useProjects();
   const client = clients.find((c) => c.id === params.id) ?? null;
   const clientProjects = projects.filter((p) => p.clientId === params.id);
+
+  const [newProjectName, setNewProjectName] = useState("");
+
+  function handleAddProject() {
+    if (!client || !newProjectName.trim()) return;
+    const id = createProject({ name: newProjectName.trim(), clientId: client.id });
+    router.push(`/projects/${id}`);
+  }
 
   return (
     <main>
@@ -55,6 +64,19 @@ export default function ClientDetailPage() {
                 </div>
               </div>
             ))}
+          </div>
+
+          <div className="add-member-row">
+            <input
+              className="input"
+              type="text"
+              placeholder="New project name"
+              value={newProjectName}
+              onChange={(e) => setNewProjectName(e.target.value)}
+            />
+            <button className="btn btn-primary" disabled={!newProjectName.trim()} onClick={handleAddProject}>
+              Add project
+            </button>
           </div>
         </div>
       )}

@@ -1,13 +1,22 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useClients } from "@/lib/clients";
+import { useClients, createClient } from "@/lib/clients";
 import { useProjects } from "@/lib/projects";
 
 export default function ClientsPage() {
   const router = useRouter();
   const clients = useClients();
   const projects = useProjects();
+  const [newClientName, setNewClientName] = useState("");
+
+  function handleAddClient() {
+    if (!newClientName.trim()) return;
+    const id = createClient(newClientName.trim());
+    setNewClientName("");
+    router.push(`/clients/${id}`);
+  }
 
   return (
     <main>
@@ -35,6 +44,13 @@ export default function ClientsPage() {
               </div>
             );
           })}
+        </div>
+
+        <div className="add-member-row">
+          <input className="input" type="text" placeholder="New client name" value={newClientName} onChange={(e) => setNewClientName(e.target.value)} />
+          <button className="btn btn-primary" disabled={!newClientName.trim()} onClick={handleAddClient}>
+            Add client
+          </button>
         </div>
       </div>
     </main>
