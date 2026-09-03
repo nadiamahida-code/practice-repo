@@ -8,6 +8,7 @@ import {
   addTeamMember,
   removeTeamMember,
   setMilestone,
+  setDeliveryMilestoneHours,
   createProject,
   SALES_MILESTONES,
   DELIVERY_MILESTONES,
@@ -26,15 +27,65 @@ const PHASE_TAG_CLASS: Record<Project["phase"], string> = {
 type Tab = "summary" | "recommendations";
 
 function Timeline({ project }: { project: Project }) {
+  const isDelivery = project.phase === "Delivery";
   const milestones = project.phase === "Sales" ? SALES_MILESTONES : DELIVERY_MILESTONES;
+
+  const totalUsed = project.deliveryMilestoneHours.reduce((a, b) => a + b, 0);
+  const totalAllocated = project.sowTotalHours;
+  const pct = totalAllocated && totalAllocated > 0 ? (totalUsed / totalAllocated) * 100 : 0;
+
   return (
     <div>
-      {milestones.map((label, i) => (
-        <button key={label} className={`milestone-item ${i <= project.milestoneIndex ? "done" : ""}`} onClick={() => setMilestone(project.id, i)}>
-          <span className="milestone-dot" />
-          {label}
-        </button>
-      ))}
+      {isDelivery &&
+        (totalAllocated != null ? (
+          <div className="hours-summary">
+            <div className="hours-summary-row">
+              <span className="used">
+                {totalUsed} of {totalAllocated} hours used
+              </span>
+              <span className="pct">{Math.round(pct)}%</span>
+            </div>
+            <div className="hours-bar-track">
+              <div className={`hours-bar-fill ${pct > 100 ? "over" : ""}`} style={{ width: `${Math.min(100, pct)}%` }} />
+            </div>
+          </div>
+        ) : (
+          <p className="lede" style={{ marginTop: 0, marginBottom: 18 }}>
+            No SOW hours on file yet.
+          </p>
+        ))}
+
+      <div className="timeline">
+        {milestones.map((label, i) => {
+          const done = i <= project.milestoneIndex;
+          const isLast = i === milestones.length - 1;
+          return (
+            <div className="timeline-row" key={label}>
+              <div className="timeline-rail">
+                <div className={`timeline-dot ${done ? "done" : ""}`} />
+                {!isLast && <div className={`timeline-connector ${done ? "done" : ""}`} />}
+              </div>
+              <div className="timeline-content">
+                <button className={`timeline-label ${done ? "done" : ""}`} onClick={() => setMilestone(project.id, i)}>
+                  {label}
+                </button>
+                {isDelivery && (
+                  <div className="milestone-hours-input">
+                    <input
+                      className="input input-num"
+                      type="number"
+                      min={0}
+                      value={project.deliveryMilestoneHours[i] ?? 0}
+                      onChange={(e) => setDeliveryMilestoneHours(project.id, i, Number(e.target.value) || 0)}
+                    />
+                    <span className="unit">hrs</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -140,17 +191,22 @@ export default function ProjectDetailPage() {
 
       {project && (
         <>
-          <div className="card">
-            <div className="project-detail-head">
-              <div>
-                <div className="eyebrow">Project</div>
-                <h1>{project.name}</h1>
-                <p className="lede">{clientName}</p>
-              </div>
-              <span className={PHASE_TAG_CLASS[project.phase]}>{project.phase}</span>
+          <div className="project-detail-head" style={{ margin: "0 0 16px" }}>
+            <div>
+              <div className="eyebrow">Project</div>
+              <h1>{project.name}</h1>
+              <p className="lede">{clientName}</p>
             </div>
+            <span className={PHASE_TAG_CLASS[project.phase]}>{project.phase}</span>
+          </div>
 
-            <div className="tab-row">
+          <div className="card">
+            <div className="eyebrow">{project.phase === "Complete" ? "Project complete" : "Timeline"}</div>
+            {project.phase === "Complete" ? <CompletedBox project={project} clientName={clientName} /> : <Timeline project={project} />}
+          </div>
+
+          <div className="card">
+            <div className="tab-row" style={{ marginTop: 0 }}>
               <button className={`tab-btn ${tab === "summary" ? "active" : ""}`} onClick={() => setTab("summary")}>
                 Summary
               </button>
@@ -207,11 +263,6 @@ export default function ProjectDetailPage() {
                 ))}
               </div>
             )}
-          </div>
-
-          <div className="card">
-            <div className="eyebrow">{project.phase === "Complete" ? "Project complete" : "Timeline"}</div>
-            {project.phase === "Complete" ? <CompletedBox project={project} clientName={clientName} /> : <Timeline project={project} />}
           </div>
 
           {project.phase !== "Complete" && (

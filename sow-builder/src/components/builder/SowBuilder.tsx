@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { StepTracker } from "./StepTracker";
 import { ProjectStep, type ProjectInfo } from "./ProjectStep";
 import { ScopeStep } from "./ScopeStep";
@@ -9,6 +9,7 @@ import { PlanStep } from "./PlanStep";
 import { MODULE_FORM_CONFIGS } from "@/lib/calculators/moduleForms";
 import type { LineItem, ModuleId, SowState } from "@/lib/calculators/types";
 import type { TimelineOption } from "@/lib/calculators/globalAssumptions";
+import { computeSowTotals } from "@/lib/calculators/aggregate";
 
 function newLineItemId(): string {
   return `li-${Math.random().toString(36).slice(2, 10)}`;
@@ -17,9 +18,11 @@ function newLineItemId(): string {
 interface SowBuilderProps {
   initialProjectInfo?: ProjectInfo;
   headerSlot?: ReactNode;
+  /** Called with the current estimate's total hours whenever the scope changes. */
+  onTotalsChange?: (totalHours: number) => void;
 }
 
-export function SowBuilder({ initialProjectInfo, headerSlot }: SowBuilderProps) {
+export function SowBuilder({ initialProjectInfo, headerSlot, onTotalsChange }: SowBuilderProps) {
   const [step, setStep] = useState(1);
   const [unlockedSteps, setUnlockedSteps] = useState<Set<number>>(new Set([1]));
 
@@ -31,6 +34,10 @@ export function SowBuilder({ initialProjectInfo, headerSlot }: SowBuilderProps) 
   const [startDate, setStartDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [pmName, setPmName] = useState("PM");
   const [owners, setOwners] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    onTotalsChange?.(computeSowTotals(sow).totalHours);
+  }, [sow, onTotalsChange]);
 
   function unlock(n: number) {
     setUnlockedSteps((prev) => new Set(prev).add(n));

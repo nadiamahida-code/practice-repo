@@ -208,42 +208,118 @@ main {
   border-top: none;
 }
 
+/* hours summary (Delivery timeline) */
+.hours-summary {
+  margin-bottom: 20px;
+}
+.hours-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+.hours-summary-row .used {
+  font-weight: 600;
+}
+.hours-summary-row .pct {
+  color: var(--text-muted);
+  font-family: var(--font-plex-mono), monospace;
+  font-size: 12px;
+}
+.hours-bar-track {
+  height: 6px;
+  background: var(--surface3);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.hours-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 4px;
+}
+.hours-bar-fill.over {
+  background: var(--danger);
+}
+
 /* milestone timeline */
-.milestone-item {
+.timeline {
+  display: flex;
+  flex-direction: column;
+}
+.timeline-row {
+  display: flex;
+  gap: 14px;
+}
+.timeline-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 14px;
+  flex-shrink: 0;
+}
+.timeline-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+  background: var(--surface2);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.timeline-dot.done {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.timeline-connector {
+  width: 2px;
+  flex: 1;
+  min-height: 22px;
+  background: var(--line);
+  margin: 3px 0;
+}
+.timeline-connector.done {
+  background: var(--accent);
+}
+.timeline-content {
+  flex: 1;
+  min-width: 0;
+  padding-bottom: 22px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  width: 100%;
+  justify-content: space-between;
+  gap: 12px;
+}
+.timeline-label {
   background: none;
   border: none;
-  border-top: 1px solid var(--line);
   text-align: left;
-  padding: 11px 0;
+  padding: 0;
   cursor: pointer;
   font-size: 13px;
-  font-family: inherit;
   color: var(--text-muted);
+  font-family: inherit;
 }
-.milestone-item:first-child {
-  border-top: none;
-}
-.milestone-item:hover {
+.timeline-label:hover {
   color: var(--text);
 }
-.milestone-item.done {
+.timeline-label.done {
   color: var(--text);
   font-weight: 600;
 }
-.milestone-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  border: 2px solid var(--line);
+.milestone-hours-input {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   flex-shrink: 0;
 }
-.milestone-item.done .milestone-dot {
-  background: var(--accent);
-  border-color: var(--accent);
+.milestone-hours-input .input {
+  width: 60px;
+  padding: 5px 8px;
+}
+.milestone-hours-input .unit {
+  font-size: 11px;
+  color: var(--text-muted);
 }
 .card {
   background: var(--surface);

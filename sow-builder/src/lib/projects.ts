@@ -28,6 +28,10 @@ export interface Project {
   team: TeamMember[];
   /** Index into the current phase's milestone list of the furthest-reached milestone. -1 = none yet. */
   milestoneIndex: number;
+  /** Total hours from the project's SOW estimate, kept in sync while the builder is open. Null until a SOW has hours. */
+  sowTotalHours: number | null;
+  /** Hours logged against each Delivery milestone, parallel to DELIVERY_MILESTONES. */
+  deliveryMilestoneHours: number[];
 }
 
 const STORAGE_KEY = "sow-builder:projects";
@@ -41,6 +45,8 @@ const SEED_PROJECTS: Project[] = [
     sowId: null,
     team: [{ id: "m-priya", name: "Priya Nandakumar", role: "Sales Rep" }],
     milestoneIndex: 0,
+    sowTotalHours: null,
+    deliveryMilestoneHours: new Array(DELIVERY_MILESTONES.length).fill(0),
   },
   {
     id: "proj-brightpath-copilot",
@@ -53,6 +59,8 @@ const SEED_PROJECTS: Project[] = [
       { id: "m-jordan", name: "Jordan B.", role: "Project Manager" },
     ],
     milestoneIndex: 2,
+    sowTotalHours: 42,
+    deliveryMilestoneHours: new Array(DELIVERY_MILESTONES.length).fill(0),
   },
   {
     id: "proj-solace-migration",
@@ -65,6 +73,8 @@ const SEED_PROJECTS: Project[] = [
       { id: "m-jordan2", name: "Jordan B.", role: "Project Manager" },
     ],
     milestoneIndex: 2,
+    sowTotalHours: 60,
+    deliveryMilestoneHours: [4, 10, 14, 0, 0, 0],
   },
   {
     id: "proj-northwind-support",
@@ -74,12 +84,20 @@ const SEED_PROJECTS: Project[] = [
     sowId: "sow-seed-northwind",
     team: [{ id: "m-priya2", name: "Priya Nandakumar", role: "Account Owner" }],
     milestoneIndex: DELIVERY_MILESTONES.length - 1,
+    sowTotalHours: 35,
+    deliveryMilestoneHours: [5, 6, 12, 4, 3, 5],
   },
 ];
 
 /** Backfills fields added after a record may have already been persisted. */
 function normalize(projects: Project[]): Project[] {
-  return projects.map((p) => ({ ...p, team: p.team ?? [], milestoneIndex: p.milestoneIndex ?? -1 }));
+  return projects.map((p) => ({
+    ...p,
+    team: p.team ?? [],
+    milestoneIndex: p.milestoneIndex ?? -1,
+    sowTotalHours: p.sowTotalHours ?? null,
+    deliveryMilestoneHours: p.deliveryMilestoneHours ?? new Array(DELIVERY_MILESTONES.length).fill(0),
+  }));
 }
 
 const listeners = new Set<() => void>();
@@ -177,10 +195,35 @@ export function setMilestone(projectId: string, index: number): void {
 
 export function createProject(input: { name: string; clientId: string }): string {
   const id = `proj-${Math.random().toString(36).slice(2, 10)}`;
-  const newProject: Project = { id, clientId: input.clientId, name: input.name, phase: "Sales", sowId: null, team: [], milestoneIndex: -1 };
+  const newProject: Project = {
+    id,
+    clientId: input.clientId,
+    name: input.name,
+    phase: "Sales",
+    sowId: null,
+    team: [],
+    milestoneIndex: -1,
+    sowTotalHours: null,
+    deliveryMilestoneHours: new Array(DELIVERY_MILESTONES.length).fill(0),
+  };
   const next = [...getSnapshot(), newProject];
   cache = next;
   writeToStorage(next);
   emitChange();
   return id;
+}
+
+/** No-ops when the value hasn't actually changed, so callers can call this on every render without looping. */
+export function setSowTotalHours(projectId: string, hours: number): void {
+  const project = getSnapshot().find((p) => p.id === projectId);
+  if (!project || project.sowTotalHours === hours) return;
+  updateProject(projectId, { sowTotalHours: hours });
+}
+
+export function setDeliveryMilestoneHours(projectId: string, milestoneIndex: number, hours: number): void {
+  const project = getSnapshot().find((p) => p.id === projectId);
+  if (!project) return;
+  const next = [...project.deliveryMilestoneHours];
+  next[milestoneIndex] = hours;
+  updateProject(projectId, { deliveryMilestoneHours: next });
 }
